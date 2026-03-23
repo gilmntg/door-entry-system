@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; background: #000; overflow: hidden; font-family: sans-serif; }
+
+        /* Remote (household) video fills the screen once received */
+        #remoteVideo {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 1; display: none;
+        }
+
+        /* Local (door panel / visitor) video — fullscreen until household connects, then PiP */
+        #localVideo {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 2;
+            transition: all 0.3s ease;
+        }
+        #localVideo.pip {
+            top: 16px; left: 16px;
+            width: 100px; height: 140px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+
+        #status {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.7); color: #fff;
+            padding: 8px 20px; border-radius: 20px; font-size: 16px;
+            z-index: 10; white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <video id="remoteVideo" autoplay playsinline></video>
+    <audio id="remoteAudio" autoplay playsinline></audio>
+    <video id="localVideo"  autoplay muted playsinline></video>
+    <div id="status">Calling home…</div>
+
+    <script>
+        var pc = null;
+
+        function setStatus(msg) {
+            document.getElementById('status').textContent = msg;
+        }
+
+        function waitForIce(conn) {
+            return new Promise(function(resolve) {
+                if (conn.iceGatheringState === 'complete') { resolve(); return; }
+                var t = setTimeout(resolve, 5000);
+                conn.onicegatheringstatechange = function() {
+                    if (conn.iceGatheringState === 'complete') { clearTimeout(t); resolve(); }
+                };
+            });
+        }
+
+        // Called by Java (VideoCallActivity) when an MQTT answer arrives.
+        window.onWebRtcAnswer = async function(answerJson) {
+            try {
+                var data = JSON.parse(answerJson);
+                if (pc && data && data.type === 'answer') {
+                    await pc.setRemoteDescription(data);
+                }
+            } catch(e) { console.error('Answer error:', e); }
+        };
+
+        async function start() {
+            try {
+                var stream;
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'user' } },
+                        audio: true
+                    });
+                } catch (audioErr) {
+                    setStatus('Mic unavailable — video only');
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: { ideal: 'user' } },
+                        audio: false
+                    });
+                }
+                document.getElementById('localVideo').srcObject = stream;
+
+                pc = new RTCPeerConnection({ iceServers: [] });
+                stream.getTracks().forEach(function(t) { pc.addTrack(t, stream); });
+                // Always include audio m-line in offer so household can send audio back,
+                // even when the panel mic is unavailable.
+                if (!stream.getAudioTracks().length) {
+                    pc.addTransceiver('audio', { direction: 'recvonly' });
+                }
+
+                // Show household's camera / play audio when tracks arrive
+                pc.ontrack = function(e) {
+                    if (e.track.kind === 'video') {
+                        var rv = document.getElementById('remoteVideo');
+                        if (e.streams && e.streams[0]) {
+                            rv.srcObject = e.streams[0];
+                        } else {
+                            if (!rv.srcObject) rv.srcObject = new MediaStream();
+                            rv.srcObject.addTrack(e.track);
+                        }
+                        rv.style.display = 'block';
+                        rv.play().catch(function() {});
+                        document.getElementById('localVideo').classList.add('pip');
+                        document.getElementById('status').style.display = 'none';
+                    } else if (e.track.kind === 'audio') {
+                        var ra = document.getElementById('remoteAudio');
+                        if (e.streams && e.streams[0]) {
+                            ra.srcObject = e.streams[0];
+                        } else {
+                            if (!ra.srcObject) ra.srcObject = new MediaStream();
+                            ra.srcObject.addTrack(e.track);
+                        }
+                        ra.play().catch(function() {});
+                    }
+                };
+
+                pc.onconnectionstatechange = function() {
+                    var s = pc.connectionState;
+                    if (s === 'connected') {
+                        setStatus('Connected');
+                        Android.onParticipantJoined();
+                    } else if (s === 'failed') {
+                        Android.onCallEnd('failed');
+                    } else if (s === 'disconnected') {
+                        setStatus('Reconnecting…');
+                    }
+                };
+
+                var offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                await waitForIce(pc);
+
+                Android.publishOffer(JSON.stringify({ sdp: pc.localDescription, ts: Date.now() }));
+                setStatus('Waiting for home…');
+
+            } catch(e) {
+                setStatus('Error: ' + e.message);
+                console.error(e);
+            }
+        }
+
+        window.addEventListener('pagehide', function() {
+            if (pc) pc.close();
+        });
+
+        start();
+    </script>
+</body>
+</html>

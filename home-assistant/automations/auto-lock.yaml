@@ -1,0 +1,18 @@
+alias: "Door - Auto Lock After Unlock"
+description: >
+  Sends LOCK command to ESP32 5 seconds after an OPEN command.
+  Uses restart mode so re-triggers reset the timer.
+
+trigger:
+  - platform: mqtt
+    topic: door/lock/command
+    payload: OPEN
+
+action:
+  - delay: "00:00:05"
+  - service: mqtt.publish
+    data:
+      topic: door/lock/command
+      payload: LOCK
+
+mode: restart

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="MQTT Host" android:textColor="#cccccc" android:layout_marginBottom="4dp"/>
+    <EditText android:id="@+id/etHost" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:inputType="text"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Port" android:textColor="#cccccc" android:layout_marginBottom="4dp"/>
+    <EditText android:id="@+id/etPort" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:inputType="number"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Username" android:textColor="#cccccc" android:layout_marginBottom="4dp"/>
+    <EditText android:id="@+id/etUser" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:inputType="text"
+        android:layout_marginBottom="12dp"/>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+        android:text="Password" android:textColor="#cccccc" android:layout_marginBottom="4dp"/>
+    <EditText android:id="@+id/etPass" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:inputType="textPassword"/>
+
+</LinearLayout>

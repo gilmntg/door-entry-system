@@ -1,0 +1,21 @@
+# Secrets — never commit
+android/secrets.properties
+android/**/local.properties
+android/**/google-services.json
+
+# Android build outputs
+android/**/build/
+android/**/.gradle/
+android/**/*.apk
+android/**/*.aab
+
+# IDE
+.idea/
+*.iml
+**/.DS_Store
+
+# Claude Code
+.claude/
+
+# Home Assistant — local overrides only; packages/ and www/ are committed
+home-assistant/automations/.storage/

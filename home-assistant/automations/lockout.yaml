@@ -1,0 +1,33 @@
+alias: "Door - Activate Lockout on Repeated Failures"
+description: >
+  Locks out PIN entry for 5 minutes after 5 consecutive failed attempts.
+  Sends push notification via HA notify service.
+
+trigger:
+  - platform: numeric_state
+    entity_id: input_number.door_failed_attempts
+    above: 4
+
+action:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.door_lockout_active
+  - service: mqtt.publish
+    data:
+      topic: door/notify/access
+      payload: lockout
+  - service: notify.notify
+    data:
+      title: "Door Alert"
+      message: "5 failed PIN attempts — entry locked out for 5 minutes"
+  - delay: "00:05:00"
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.door_lockout_active
+  - service: input_number.set_value
+    target:
+      entity_id: input_number.door_failed_attempts
+    data:
+      value: 0
+
+mode: single

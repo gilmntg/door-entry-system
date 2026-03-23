@@ -1,0 +1,273 @@
+# Door Entry System - HA Package
+#
+# Drop this file into /config/packages/ on your HA instance.
+# Then add to /config/configuration.yaml:
+#
+#   homeassistant:
+#     packages:
+#       door_entry: !include packages/door_entry.yaml
+#
+# Restart HA after adding. All helpers and automations are created automatically.
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+input_text:
+  door_pin_admin:
+    name: "Door PIN - Admin"
+    min: 4
+    max: 12
+    mode: password
+
+  door_pin_resident_1:
+    name: "Door PIN - Resident 1"
+    min: 4
+    max: 12
+    mode: password
+
+  door_pin_resident_2:
+    name: "Door PIN - Resident 2"
+    min: 4
+    max: 12
+    mode: password
+
+input_number:
+  door_failed_attempts:
+    name: "Door Failed Attempts"
+    min: 0
+    max: 10
+    step: 1
+    mode: box
+    icon: mdi:counter
+
+input_boolean:
+  door_lockout_active:
+    name: "Door Lockout Active"
+    icon: mdi:lock-alert
+
+# ---------------------------------------------------------------------------
+# Automations
+# ---------------------------------------------------------------------------
+
+automation:
+
+  # -- PIN Entry ------------------------------------------------------------
+  - id: "door_handle_pin_entry"
+    alias: "Door - Handle PIN Entry"
+    description: "Validates submitted PIN against input_text helpers."
+    trigger:
+      - platform: mqtt
+        topic: door/panel/code/request
+    condition:
+      - condition: state
+        entity_id: input_boolean.door_lockout_active
+        state: "off"
+    action:
+      - variables:
+          submitted_pin: "{{ trigger.payload | trim }}"
+          valid: "{{ trigger.payload | trim != '' and (
+              trigger.payload | trim == states('input_text.door_pin_admin') or
+              trigger.payload | trim == states('input_text.door_pin_resident_1') or
+              trigger.payload | trim == states('input_text.door_pin_resident_2')
+            ) }}"
+      - choose:
+          - conditions: "{{ valid }}"
+            sequence:
+              - action: input_number.set_value
+                target:
+                  entity_id: input_number.door_failed_attempts
+                data:
+                  value: 0
+              - action: mqtt.publish
+                data:
+                  topic: cmnd/door_lock/POWER
+                  payload: "ON"
+              - action: mqtt.publish
+                data:
+                  topic: door/notify/access
+                  payload: granted
+        default:
+          - action: input_number.increment
+            target:
+              entity_id: input_number.door_failed_attempts
+          - action: mqtt.publish
+            data:
+              topic: door/notify/access
+              payload: denied
+    mode: queued
+    max: 5
+
+  # -- Fingerprint Auth -----------------------------------------------------
+  - id: "door_handle_fingerprint_auth"
+    alias: "Door - Handle Fingerprint Auth"
+    description: "Grants access when the panel app verifies a fingerprint."
+    trigger:
+      - platform: mqtt
+        topic: door/panel/fingerprint/auth
+        payload: verified
+    condition:
+      - condition: state
+        entity_id: input_boolean.door_lockout_active
+        state: "off"
+    action:
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.door_failed_attempts
+        data:
+          value: 0
+      - action: mqtt.publish
+        data:
+          topic: cmnd/door_lock/POWER
+          payload: "ON"
+      - action: mqtt.publish
+        data:
+          topic: door/notify/access
+          payload: granted
+    mode: single
+
+  # -- Auto Lock ------------------------------------------------------------
+  - id: "door_auto_lock"
+    alias: "Door - Auto Lock After Unlock"
+    description: "Sends LOCK command 5 seconds after an OPEN command."
+    trigger:
+      - platform: mqtt
+        topic: cmnd/door_lock/POWER
+        payload: "ON"
+    action:
+      - delay: "00:00:05"
+      - action: mqtt.publish
+        data:
+          topic: cmnd/door_lock/POWER
+          payload: "OFF"
+    mode: restart
+
+  # -- Lockout --------------------------------------------------------------
+  - id: "door_activate_lockout"
+    alias: "Door - Activate Lockout"
+    description: "Locks out entry for 5 minutes after 5 consecutive failures."
+    trigger:
+      - platform: numeric_state
+        entity_id: input_number.door_failed_attempts
+        above: 4
+    action:
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.door_lockout_active
+      - action: mqtt.publish
+        data:
+          topic: door/notify/access
+          payload: lockout
+      - action: notify.notify
+        data:
+          title: "Door Alert"
+          message: "5 failed PIN attempts — entry locked out for 5 minutes"
+      - delay: "00:05:00"
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.door_lockout_active
+      - action: input_number.set_value
+        target:
+          entity_id: input_number.door_failed_attempts
+        data:
+          value: 0
+    mode: single
+
+  # -- Publish current PINs as retained MQTT so household app can read them ---
+  - id: "door_publish_pins"
+    alias: "Door - Publish PINs to MQTT"
+    trigger:
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - input_text.door_pin_admin
+          - input_text.door_pin_resident_1
+          - input_text.door_pin_resident_2
+    action:
+      - action: mqtt.publish
+        data:
+          topic: "door/config/pin/admin"
+          payload: "{{ states('input_text.door_pin_admin') }}"
+          retain: true
+      - action: mqtt.publish
+        data:
+          topic: "door/config/pin/resident1"
+          payload: "{{ states('input_text.door_pin_resident_1') }}"
+          retain: true
+      - action: mqtt.publish
+        data:
+          topic: "door/config/pin/resident2"
+          payload: "{{ states('input_text.door_pin_resident_2') }}"
+          retain: true
+    mode: queued
+
+  # -- Household app unlock (during video call) --------------------------------
+  - id: "door_household_unlock"
+    alias: "Door - Household App Unlock"
+    trigger:
+      - platform: mqtt
+        topic: door/household/unlock
+    action:
+      - action: mqtt.publish
+        data:
+          topic: cmnd/door_lock/POWER
+          payload: "ON"
+    mode: single
+
+  # -- PIN Management (from household app) ------------------------------------
+  - id: "door_update_pin_admin"
+    alias: "Door - Update Admin PIN"
+    trigger:
+      - platform: mqtt
+        topic: door/admin/pin/admin
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.door_pin_admin
+        data:
+          value: "{{ trigger.payload | trim }}"
+    mode: single
+
+  - id: "door_update_pin_resident1"
+    alias: "Door - Update Resident 1 PIN"
+    trigger:
+      - platform: mqtt
+        topic: door/admin/pin/resident1
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.door_pin_resident_1
+        data:
+          value: "{{ trigger.payload | trim }}"
+    mode: single
+
+  - id: "door_update_pin_resident2"
+    alias: "Door - Update Resident 2 PIN"
+    trigger:
+      - platform: mqtt
+        topic: door/admin/pin/resident2
+    action:
+      - action: input_text.set_value
+        target:
+          entity_id: input_text.door_pin_resident_2
+        data:
+          value: "{{ trigger.payload | trim }}"
+    mode: single
+
+  # -- PIR motion → wake panel screen ------------------------------------------
+  - id: "door_pir_wake_panel"
+    alias: "Door - PIR Wake Panel Screen"
+    trigger:
+      - platform: mqtt
+        topic: tele/door_lock/SENSOR
+        value_template: "{{ value_json.Switch1 }}"
+        payload: "ON"
+    action:
+      - action: mqtt.publish
+        data:
+          topic: door/panel/motion
+          payload: "detected"
+    mode: single
+    max_exceeded: silent
+

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="@color/bg_idle">
+
+    <!-- Status text -->
+    <TextView
+        android:id="@+id/tvStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter code or use fingerprint"
+        android:textSize="18sp"
+        android:textColor="@android:color/white"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Code display (dots) -->
+    <TextView
+        android:id="@+id/tvCodeDisplay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="36sp"
+        android:textColor="@android:color/white"
+        android:letterSpacing="0.3"
+        android:layout_marginBottom="24dp"
+        android:minWidth="160dp"
+        android:gravity="center"/>
+
+    <!-- Keypad rows -->
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="3"
+        android:rowCount="4"
+        android:layout_marginBottom="16dp">
+
+        <Button android:id="@+id/btn1" style="@style/KeypadButton" android:text="1"/>
+        <Button android:id="@+id/btn2" style="@style/KeypadButton" android:text="2"/>
+        <Button android:id="@+id/btn3" style="@style/KeypadButton" android:text="3"/>
+        <Button android:id="@+id/btn4" style="@style/KeypadButton" android:text="4"/>
+        <Button android:id="@+id/btn5" style="@style/KeypadButton" android:text="5"/>
+        <Button android:id="@+id/btn6" style="@style/KeypadButton" android:text="6"/>
+        <Button android:id="@+id/btn7" style="@style/KeypadButton" android:text="7"/>
+        <Button android:id="@+id/btn8" style="@style/KeypadButton" android:text="8"/>
+        <Button android:id="@+id/btn9" style="@style/KeypadButton" android:text="9"/>
+        <Button android:id="@+id/btnClear" style="@style/KeypadButton" android:text="⌫"
+            android:backgroundTint="#888"/>
+        <Button android:id="@+id/btn0" style="@style/KeypadButton" android:text="0"/>
+        <Button android:id="@+id/btnEnter" style="@style/KeypadButton" android:text="✓"
+            android:backgroundTint="#4CAF50"/>
+    </GridLayout>
+
+    <!-- Fingerprint button -->
+    <Button
+        android:id="@+id/btnFingerprint"
+        android:layout_width="200dp"
+        android:layout_height="56dp"
+        android:text="👆 Fingerprint"
+        android:textSize="16sp"
+        android:backgroundTint="#1565C0"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- Bell button -->
+    <Button
+        android:id="@+id/btnBell"
+        android:layout_width="200dp"
+        android:layout_height="56dp"
+        android:text="🔔 Ring Bell"
+        android:textSize="16sp"
+        android:backgroundTint="#F57C00"/>
+
+</LinearLayout>

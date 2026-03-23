@@ -1,0 +1,32 @@
+alias: "Door - Handle Fingerprint Auth"
+description: >
+  Triggered when the door panel app publishes a verified fingerprint.
+  Checks lockout state, then grants access and opens the lock.
+  Uses a separate helper to track which device IDs are enrolled (optional).
+
+trigger:
+  - platform: mqtt
+    topic: door/panel/fingerprint/auth
+    payload: verified
+
+condition:
+  - condition: state
+    entity_id: input_boolean.door_lockout_active
+    state: "off"
+
+action:
+  - service: input_number.set_value
+    target:
+      entity_id: input_number.door_failed_attempts
+    data:
+      value: 0
+  - service: mqtt.publish
+    data:
+      topic: door/lock/command
+      payload: OPEN
+  - service: mqtt.publish
+    data:
+      topic: door/notify/access
+      payload: granted
+
+mode: single

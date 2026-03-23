@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0d1117">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Manage PINs"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="#ffffff" />
+
+            <Button
+                android:id="@+id/btnToggleVisibility"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="Show"
+                android:textSize="13sp" />
+
+        </LinearLayout>
+
+        <!-- Admin PIN -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Admin PIN"
+            android:textSize="14sp"
+            android:textColor="#8b949e"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <EditText
+                android:id="@+id/etAdminPin"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:inputType="numberPassword"
+                android:hint="New PIN"
+                android:textColor="#ffffff"
+                android:textColorHint="#555555"
+                android:background="#161b22"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textSize="18sp"
+                android:maxLength="8"
+                android:layout_marginEnd="12dp" />
+
+            <Button
+                android:id="@+id/btnSaveAdmin"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:text="Save"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Resident 1 PIN -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resident 1 PIN"
+            android:textSize="14sp"
+            android:textColor="#8b949e"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="24dp">
+
+            <EditText
+                android:id="@+id/etResident1Pin"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:inputType="numberPassword"
+                android:hint="New PIN"
+                android:textColor="#ffffff"
+                android:textColorHint="#555555"
+                android:background="#161b22"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textSize="18sp"
+                android:maxLength="8"
+                android:layout_marginEnd="12dp" />
+
+            <Button
+                android:id="@+id/btnSaveResident1"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:text="Save"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <!-- Resident 2 PIN -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Resident 2 PIN"
+            android:textSize="14sp"
+            android:textColor="#8b949e"
+            android:layout_marginBottom="6dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="32dp">
+
+            <EditText
+                android:id="@+id/etResident2Pin"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
+                android:inputType="numberPassword"
+                android:hint="New PIN"
+                android:textColor="#ffffff"
+                android:textColorHint="#555555"
+                android:background="#161b22"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:textSize="18sp"
+                android:maxLength="8"
+                android:layout_marginEnd="12dp" />
+
+            <Button
+                android:id="@+id/btnSaveResident2"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:text="Save"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvFeedback"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="14sp"
+            android:textColor="#3fb950"
+            android:visibility="invisible" />
+
+    </LinearLayout>
+</ScrollView>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg_idle">#1A237E</color>
+    <color name="bg_success">#1B5E20</color>
+    <color name="bg_denied">#B71C1C</color>
+    <color name="keypad_button">#283593</color>
+</resources>

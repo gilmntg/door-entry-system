@@ -1,0 +1,3 @@
+# Doorbell notification is now handled entirely by the household Android app.
+# The app subscribes to door/panel/bell directly via MQTT and shows its own
+# heads-up notification with Answer and Unlock actions.

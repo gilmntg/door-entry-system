@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="status_running">#2ea043</color>
+    <color name="status_stopped">#da3633</color>
+</resources>

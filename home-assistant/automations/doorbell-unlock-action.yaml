@@ -1,0 +1,17 @@
+alias: "Door - Unlock from Doorbell Notification"
+description: >
+  Handles the UNLOCK_DOOR action tapped in the doorbell push notification.
+
+trigger:
+  - platform: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: UNLOCK_DOOR
+
+action:
+  - service: mqtt.publish
+    data:
+      topic: door/lock/command
+      payload: OPEN
+
+mode: single

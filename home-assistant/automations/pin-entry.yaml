@@ -1,0 +1,52 @@
+alias: "Door - Handle PIN Entry"
+description: >
+  Validates submitted PIN against input_text helpers.
+  Panel publishes raw PIN string to door/panel/code/request.
+  HA responds on door/notify/access with 'granted' or 'denied'.
+
+trigger:
+  - platform: mqtt
+    topic: door/panel/code/request
+
+condition:
+  - condition: state
+    entity_id: input_boolean.door_lockout_active
+    state: "off"
+
+action:
+  - variables:
+      submitted_pin: "{{ trigger.payload | trim }}"
+      valid: "{{ trigger.payload | trim != '' and (
+          trigger.payload | trim == states('input_text.door_pin_admin') or
+          trigger.payload | trim == states('input_text.door_pin_resident_1') or
+          trigger.payload | trim == states('input_text.door_pin_resident_2')
+        ) }}"
+
+  - choose:
+      - conditions: "{{ valid }}"
+        sequence:
+          - service: input_number.set_value
+            target:
+              entity_id: input_number.door_failed_attempts
+            data:
+              value: 0
+          - service: mqtt.publish
+            data:
+              topic: door/lock/command
+              payload: OPEN
+          - service: mqtt.publish
+            data:
+              topic: door/notify/access
+              payload: granted
+
+    default:
+      - service: input_number.increment
+        target:
+          entity_id: input_number.door_failed_attempts
+      - service: mqtt.publish
+        data:
+          topic: door/notify/access
+          payload: denied
+
+mode: queued
+max: 5
