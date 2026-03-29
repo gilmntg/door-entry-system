@@ -51,6 +51,9 @@ class MainActivity : AppCompatActivity() {
                     this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 100)
             }
         }
+
+        // Check for app updates
+        UpdateChecker(this).checkForUpdates()
     }
 
     override fun onResume() {

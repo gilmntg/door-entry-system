@@ -1,0 +1,14 @@
+{
+  "panel": {
+    "versionCode": 2,
+    "versionName": "1.1",
+    "downloadUrl": "http://192.168.68.61:8123/local/door-panel-app-1.1.apk",
+    "releaseNotes": "Bug fixes and improvements"
+  },
+  "household": {
+    "versionCode": 2,
+    "versionName": "1.1",
+    "downloadUrl": "http://192.168.68.61:8123/local/door-household-app-1.1.apk",
+    "releaseNotes": "Bug fixes and improvements"
+  }
+}

@@ -36,6 +36,9 @@ class MainActivity : AppCompatActivity() {
         setupBiometric()
         setupBellButton()
         setupSettingsAccess()
+
+        // Check for app updates
+        UpdateChecker(this).checkForUpdates()
     }
 
     private var isDimmed = false
