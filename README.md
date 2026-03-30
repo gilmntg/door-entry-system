@@ -228,13 +228,6 @@ scp home-assistant\www\apps-version.json `
     root@192.168.68.61:/config/www/apps-version.json
 ```
 
-**6. Install directly on connected phones via ADB** (optional — or let users get the OTA prompt):
+**6. Commit and push to GitHub.**
 
-```powershell
-adb install -r android\door-panel\app\build\outputs\apk\debug\app-debug.apk
-```
-
-**7. Commit and push to GitHub.**
-
-> The door-panel is an anonymous kiosk phone — install via ADB cable.
-> Household phones pick up the update automatically next time they open the app.
+Both apps will show an update dialog automatically the next time they are opened. The user taps **Download**, the browser fetches the APK from HA, and Android installs it. No USB cable needed for either device.
