@@ -228,6 +228,13 @@ scp home-assistant\www\apps-version.json `
     root@192.168.68.61:/config/www/apps-version.json
 ```
 
-**6. Commit and push to GitHub.**
+**6. Commit, tag, and push to GitHub.**
+
+```powershell
+git add .
+git commit -m "Release v1.2 — brief description of changes"
+git tag v1.2
+git push && git push --tags
+```
 
 Both apps will show an update dialog automatically the next time they are opened. The user taps **Download**, the browser fetches the APK from HA, and Android installs it. No USB cable needed for either device.
