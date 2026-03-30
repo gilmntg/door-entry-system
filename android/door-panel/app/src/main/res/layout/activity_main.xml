@@ -56,15 +56,33 @@
             android:backgroundTint="#4CAF50"/>
     </GridLayout>
 
-    <!-- Fingerprint button -->
-    <Button
-        android:id="@+id/btnFingerprint"
-        android:layout_width="200dp"
-        android:layout_height="56dp"
-        android:text="👆 Fingerprint"
-        android:textSize="16sp"
-        android:backgroundTint="#1565C0"
-        android:layout_marginBottom="12dp"/>
+    <!-- Fingerprint touch area -->
+    <LinearLayout
+        android:id="@+id/layoutFingerprint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless">
+
+        <ImageView
+            android:id="@+id/ivFingerprint"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:src="@drawable/ic_fingerprint"
+            android:alpha="0.7"
+            android:contentDescription="Fingerprint authentication"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Touch to authenticate"
+            android:textSize="11sp"
+            android:textColor="#AAAAAA"
+            android:layout_marginTop="4dp"/>
+    </LinearLayout>
 
     <!-- Bell button -->
     <Button
@@ -73,6 +91,16 @@
         android:layout_height="56dp"
         android:text="🔔 Ring Bell"
         android:textSize="16sp"
-        android:backgroundTint="#F57C00"/>
+        android:backgroundTint="#F57C00"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- Version -->
+    <TextView
+        android:id="@+id/tvVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="11sp"
+        android:textColor="#666666"/>
 
 </LinearLayout>

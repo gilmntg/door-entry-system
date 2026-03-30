@@ -92,7 +92,7 @@ Door Entry System/
 ├── home-assistant/
 │   ├── packages/door_entry.yaml   # Single deployable HA package
 │   ├── automations/               # Reference copies of individual automations
-│   └── www/                       # Legacy (not used)
+│   └── www/                       # apps-version.json + APK files for OTA updates
 ├── esp32/door-lock/               # Legacy Arduino sketch (replaced by Tasmota)
 └── docs/
     ├── setup-guide.md
@@ -158,5 +158,83 @@ This gives low-latency, full-duplex audio without relying on WebRTC's audio pipe
 
 - Mosquitto must expose **port 1883** (TCP for Android native MQTT) and **port 1884** (WebSocket — not used in current implementation but mapped in HA Docker).
 - The HA package (`door_entry.yaml`) must be dropped into `/config/packages/` and referenced from `configuration.yaml`. See [home-assistant/README.md](home-assistant/README.md).
-- SSH into HA: `ssh root@192.168.68.61 -p 22222`
+- SSH into HA: `ssh root@192.168.68.61`
 - All logic is local. No cloud services, no external APIs.
+
+---
+
+## Releasing a New App Version (OTA)
+
+Both Android apps support over-the-air updates. When a newer version is available on the HA server, the app shows an update dialog on startup with a download link.
+
+### Steps
+
+**1. Bump version numbers** in both `build.gradle.kts` files:
+
+```kotlin
+// android/door-panel/app/build.gradle.kts
+versionCode = 3        // increment by 1
+versionName = "1.2"    // human-readable label
+
+// android/household/app/build.gradle.kts
+versionCode = 3
+versionName = "1.2"
+```
+
+**2. Build both APKs:**
+
+```powershell
+$env:JAVA_HOME = "C:\android-studio\jbr"
+cd "c:\My Projects\Claude code projects\Door Entry System"
+
+cd android\door-panel;  .\gradlew assembleDebug; cd ..\..
+cd android\household;   .\gradlew assembleDebug; cd ..\..
+```
+
+**3. Copy APKs to HA** (`/config/www/` on the Raspberry Pi):
+
+```powershell
+$ver = "1.2"
+scp android\door-panel\app\build\outputs\apk\debug\app-debug.apk `
+    root@192.168.68.61:/config/www/door-panel-app-$ver.apk
+
+scp android\household\app\build\outputs\apk\debug\app-debug.apk `
+    root@192.168.68.61:/config/www/door-household-app-$ver.apk
+```
+
+**4. Update `home-assistant/www/apps-version.json`:**
+
+```json
+{
+  "panel": {
+    "versionCode": 3,
+    "versionName": "1.2",
+    "downloadUrl": "http://192.168.68.61:8123/local/door-panel-app-1.2.apk",
+    "releaseNotes": "Brief description of what changed"
+  },
+  "household": {
+    "versionCode": 3,
+    "versionName": "1.2",
+    "downloadUrl": "http://192.168.68.61:8123/local/door-household-app-1.2.apk",
+    "releaseNotes": "Brief description of what changed"
+  }
+}
+```
+
+**5. Copy the updated JSON to HA:**
+
+```powershell
+scp home-assistant\www\apps-version.json `
+    root@192.168.68.61:/config/www/apps-version.json
+```
+
+**6. Install directly on connected phones via ADB** (optional — or let users get the OTA prompt):
+
+```powershell
+adb install -r android\door-panel\app\build\outputs\apk\debug\app-debug.apk
+```
+
+**7. Commit and push to GitHub.**
+
+> The door-panel is an anonymous kiosk phone — install via ADB cable.
+> Household phones pick up the update automatically next time they open the app.

@@ -17,8 +17,8 @@ android {
         applicationId = "com.doorentry.household"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
 
         buildConfigField("String", "MQTT_HOST",     "\"${secrets["MQTT_HOST"]     ?: "192.168.1.100"}\"")
         buildConfigField("int",    "MQTT_PORT",     "${secrets["MQTT_PORT"]       ?: 1883}")

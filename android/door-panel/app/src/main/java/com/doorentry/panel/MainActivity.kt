@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 import android.widget.EditText
@@ -25,6 +26,10 @@ class MainActivity : AppCompatActivity() {
     private val MAX_CODE_LENGTH = 8
     private val CLEAR_DELAY_MS = 3000L
 
+    private var canUseBiometrics = false
+    private var isBiometricPromptShowing = false
+    private var biometricPrompt: BiometricPrompt? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -39,11 +44,16 @@ class MainActivity : AppCompatActivity() {
 
         // Check for app updates
         UpdateChecker(this).checkForUpdates()
+
+        binding.tvVersion.text = "v${BuildConfig.VERSION_NAME}"
     }
 
     private var isDimmed = false
 
     private val dimScreen = Runnable {
+        biometricPrompt?.cancelAuthentication()
+        biometricPrompt = null
+        isBiometricPromptShowing = false
         val lp = window.attributes
         lp.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_OFF
         window.attributes = lp
@@ -58,6 +68,9 @@ class MainActivity : AppCompatActivity() {
         window.attributes = lp
         handler.removeCallbacks(dimScreen)
         handler.postDelayed(dimScreen, 30_000L)
+        if (wasDimmed) {
+            handler.postDelayed({ startBiometricAuth() }, 300L)
+        }
     }
 
     private fun keepScreenOn() {
@@ -68,8 +81,8 @@ class MainActivity : AppCompatActivity() {
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
             View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
         )
-        // Start dimmed — PIR motion will wake it
-        handler.postDelayed(dimScreen, 30_000L)
+        // Keep screen bright for 2 minutes on startup, then apply PIR wake logic
+        handler.postDelayed(dimScreen, 120_000L)
     }
 
     private fun setupMqtt() {
@@ -122,25 +135,39 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupBiometric() {
         val biometricManager = BiometricManager.from(this)
-        val canAuthenticate = biometricManager.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG)
-        if (canAuthenticate == BiometricManager.BIOMETRIC_SUCCESS) {
-            binding.btnFingerprint.visibility = View.VISIBLE
-            binding.btnFingerprint.setOnClickListener { startBiometricAuth() }
+        canUseBiometrics = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+        if (canUseBiometrics) {
+            binding.layoutFingerprint.visibility = View.VISIBLE
+            binding.layoutFingerprint.setOnClickListener { startBiometricAuth() }
         } else {
-            binding.btnFingerprint.visibility = View.GONE
+            binding.layoutFingerprint.visibility = View.GONE
         }
     }
 
     private fun startBiometricAuth() {
+        if (!canUseBiometrics || isBiometricPromptShowing) return
+        isBiometricPromptShowing = true
         val executor = ContextCompat.getMainExecutor(this)
         val prompt = BiometricPrompt(this, executor, object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                biometricPrompt = null
+                isBiometricPromptShowing = false
                 mqttManager.publishFingerprintAuth()
                 showWaiting()
             }
-            override fun onAuthenticationFailed() { showDenied() }
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) { showIdle() }
+            override fun onAuthenticationFailed() {
+                biometricPrompt = null
+                isBiometricPromptShowing = false
+                showDenied()
+            }
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                biometricPrompt = null
+                isBiometricPromptShowing = false
+                showIdle()
+            }
         })
+        biometricPrompt = prompt
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
             .setTitle("Door Access")
             .setSubtitle("Verify your fingerprint to open the door")
@@ -234,9 +261,18 @@ class MainActivity : AppCompatActivity() {
         // Kiosk mode — back button disabled
     }
 
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (isDimmed && ev.action == MotionEvent.ACTION_DOWN) {
+            wakeScreen()
+            return true  // consume touch — don't accidentally trigger a button beneath
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
     override fun onResume() {
         super.onResume()
         showIdle()
+        handler.postDelayed({ startBiometricAuth() }, 400L)
     }
 
     override fun onDestroy() {

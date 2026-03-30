@@ -54,6 +54,8 @@ class MainActivity : AppCompatActivity() {
 
         // Check for app updates
         UpdateChecker(this).checkForUpdates()
+
+        findViewById<android.widget.TextView>(R.id.tvVersion).text = "v${BuildConfig.VERSION_NAME}"
     }
 
     override fun onResume() {
